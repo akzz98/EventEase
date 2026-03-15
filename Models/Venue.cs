@@ -22,5 +22,8 @@ namespace EventEase.Models
 
         [MaxLength(500)]
         public string? ImageUrl { get; set; }
+
+        // Navigation Property
+        public ICollection<Booking>? Bookings { get; set; }
     }
 }

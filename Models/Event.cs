@@ -16,5 +16,8 @@ namespace EventEase.Models
         public DateTime? PlannedStartDate { get; set; }
 
         public DateTime? PlannedEndDate { get; set; }
+
+        // Navigation Property
+        public ICollection<Booking>? Bookings { get; set; }
     }
 }

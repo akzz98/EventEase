@@ -20,7 +20,6 @@ namespace EventEase.Models
         [Required]
         public DateTime EndDateTime { get; set; }
 
-        [Required]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         [Required]
