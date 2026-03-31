@@ -21,7 +21,8 @@ namespace EventEase.Models
         public string? Description { get; set; }
 
         [MaxLength(500)]
-        public string? ImageUrl { get; set; }
+        [Display(Name = "Venue Image URL")]
+        public string? ImageUrl { get; set; } = "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=500&q=60";
 
         // Navigation Property
         public ICollection<Booking>? Bookings { get; set; }
