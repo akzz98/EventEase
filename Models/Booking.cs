@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EventEase.Models
 {
@@ -27,10 +26,7 @@ namespace EventEase.Models
         public string Status { get; set; } = "Confirmed";
 
         // Navigation properties
-        [ForeignKey(nameof(VenueId))]
         public Venue? Venue { get; set; }
-
-        [ForeignKey(nameof(EventId))]
         public Event? Event { get; set; }
     }
 }
