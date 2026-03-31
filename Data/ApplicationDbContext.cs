@@ -1,5 +1,7 @@
 ﻿using EventEase.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace EventEase.Data
 {
@@ -41,8 +43,8 @@ namespace EventEase.Data
                 entity.HasKey(e => e.BookingId);
                 entity.Property(e => e.StartDateTime).IsRequired();
                 entity.Property(e => e.EndDateTime).IsRequired();
-                entity.Property(e => e.CreatedAt).IsRequired().HasDefaultValueSql("GETDATE()");
-                entity.Property(e => e.Status).IsRequired().HasMaxLength(50).HasDefaultValue("Confirmed");
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
+                entity.Property(e => e.Status).HasMaxLength(50).HasDefaultValue("Confirmed");
 
                 // Configure relationships
                 entity.HasOne(e => e.Venue)
