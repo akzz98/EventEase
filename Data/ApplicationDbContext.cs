@@ -41,20 +41,23 @@ namespace EventEase.Data
             modelBuilder.Entity<Booking>(entity =>
             {
                 entity.HasKey(e => e.BookingId);
+
+                entity.Property(e => e.VenueId).IsRequired();
+                entity.Property(e => e.EventId).IsRequired();
                 entity.Property(e => e.StartDateTime).IsRequired();
                 entity.Property(e => e.EndDateTime).IsRequired();
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
                 entity.Property(e => e.Status).HasMaxLength(50).HasDefaultValue("Confirmed");
 
                 // Configure relationships
-                entity.HasOne(e => e.Venue)
+                entity.HasOne<Venue>(e => e.Venue)
                     .WithMany()
-                    .HasForeignKey("VenueId")
+                    .HasForeignKey(e => e.VenueId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasOne(e => e.Event)
+                entity.HasOne<Event>(e => e.Event)
                     .WithMany()
-                    .HasForeignKey("EventId")
+                    .HasForeignKey(e => e.EventId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
         }
