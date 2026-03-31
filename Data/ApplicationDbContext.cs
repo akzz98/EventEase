@@ -49,12 +49,12 @@ namespace EventEase.Data
                 // Configure relationships
                 entity.HasOne(e => e.Venue)
                     .WithMany()
-                    .HasForeignKey(e => e.VenueId)
+                    .HasForeignKey("VenueId")
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(e => e.Event)
                     .WithMany()
-                    .HasForeignKey(e => e.EventId)
+                    .HasForeignKey("EventId")
                     .OnDelete(DeleteBehavior.Cascade);
             });
         }
