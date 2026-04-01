@@ -55,9 +55,9 @@
                 @Html.DisplayFor(modelItem => item.Event.Name)
             </td>
             <td>
-                <a asp-action="Edit" asp-route-id="@item.BookingId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.BookingId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.BookingId">Delete</a>
+                <a asp-action="Edit" asp-route-id="@item.BookingId" class="btn btn-sm btn-warning">Edit</a>
+                <a asp-action="Details" asp-route-id="@item.BookingId" class="btn btn-sm btn-info">Details</a>
+                <a asp-action="Delete" asp-route-id="@item.BookingId" class="btn btn-sm btn-danger">Delete</a>
             </td>
         </tr>
 }
