@@ -3,6 +3,41 @@
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-3 fw-bold mb-4">Welcome to EventEase</h1>
+    <p class="lead fs-5 text-muted mb-5">Your complete venue booking management solution</p>
+
+    <div class="row mt-5">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <i class="bi bi-building fs-1 text-primary mb-3"></i>
+                    <h3 class="card-title">Manage Venues</h3>
+                    <p class="card-text">Add, edit, and organize your venue listings with detailed information and images.</p>
+                    <a asp-controller="Venues" asp-action="Index" class="btn btn-outline-primary">View Venues</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <i class="bi bi-calendar-event fs-1 text-success mb-3"></i>
+                    <h3 class="card-title">Plan Events</h3>
+                    <p class="card-text">Create and manage events with flexible scheduling and comprehensive details.</p>
+                    <a asp-controller="Events" asp-action="Index" class="btn btn-outline-success">View Events</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <i class="bi bi-bookmark-check fs-1 text-info mb-3"></i>
+                    <h3 class="card-title">Track Bookings</h3>
+                    <p class="card-text">Efficiently manage venue bookings and avoid scheduling conflicts with ease.</p>
+                    <a asp-controller="Bookings" asp-action="Index" class="btn btn-outline-info">View Bookings</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
