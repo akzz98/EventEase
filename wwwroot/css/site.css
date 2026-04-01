@@ -29,3 +29,21 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+body {
+    background-color: #f5f7fa;
+}
+
+.table {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.btn {
+    border-radius: 8px;
+}
+
+.navbar-brand {
+    font-size: 1.4rem;
+    letter-spacing: 1px;
+}
