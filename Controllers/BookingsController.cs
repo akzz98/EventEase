@@ -59,10 +59,28 @@ namespace EventEase.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("BookingId,VenueId,EventId,StartDateTime,EndDateTime,CreatedAt,Status")] Booking booking)
+        public async Task<IActionResult> Create([Bind("BookingId,VenueId,EventId,StartDate,StartTime,EndDate,EndTime,Status")] Booking booking)
         {
+            // Combine date and time fields into DateTime properties
+            if (booking.StartDate.HasValue && booking.StartTime.HasValue)
+            {
+                booking.StartDateTime = booking.StartDate.Value.Date + booking.StartTime.Value;
+            }
+
+            if (booking.EndDate.HasValue && booking.EndTime.HasValue)
+            {
+                booking.EndDateTime = booking.EndDate.Value.Date + booking.EndTime.Value;
+            }
+
+            // Remove validation errors for the NotMapped properties
+            ModelState.Remove(nameof(booking.StartDate));
+            ModelState.Remove(nameof(booking.StartTime));
+            ModelState.Remove(nameof(booking.EndDate));
+            ModelState.Remove(nameof(booking.EndTime));
+
             if (ModelState.IsValid)
             {
+                booking.CreatedAt = DateTime.Now;
                 _context.Add(booking);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -85,6 +103,13 @@ namespace EventEase.Controllers
             {
                 return NotFound();
             }
+
+            // Split DateTime into separate date and time fields for the form
+            booking.StartDate = booking.StartDateTime.Date;
+            booking.StartTime = booking.StartDateTime.TimeOfDay;
+            booking.EndDate = booking.EndDateTime.Date;
+            booking.EndTime = booking.EndDateTime.TimeOfDay;
+
             ViewData["EventId"] = new SelectList(_context.Events, "EventId", "Name", booking.EventId);
             ViewData["VenueId"] = new SelectList(_context.Venues, "VenueId", "Location", booking.VenueId);
             return View(booking);
@@ -95,12 +120,29 @@ namespace EventEase.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("BookingId,VenueId,EventId,StartDateTime,EndDateTime,CreatedAt,Status")] Booking booking)
+        public async Task<IActionResult> Edit(int id, [Bind("BookingId,VenueId,EventId,StartDate,StartTime,EndDate,EndTime,CreatedAt,Status")] Booking booking)
         {
             if (id != booking.BookingId)
             {
                 return NotFound();
             }
+
+            // Combine date and time fields into DateTime properties
+            if (booking.StartDate.HasValue && booking.StartTime.HasValue)
+            {
+                booking.StartDateTime = booking.StartDate.Value.Date + booking.StartTime.Value;
+            }
+
+            if (booking.EndDate.HasValue && booking.EndTime.HasValue)
+            {
+                booking.EndDateTime = booking.EndDate.Value.Date + booking.EndTime.Value;
+            }
+
+            // Remove validation errors for the NotMapped properties
+            ModelState.Remove(nameof(booking.StartDate));
+            ModelState.Remove(nameof(booking.StartTime));
+            ModelState.Remove(nameof(booking.EndDate));
+            ModelState.Remove(nameof(booking.EndTime));
 
             if (ModelState.IsValid)
             {
