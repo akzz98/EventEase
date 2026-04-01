@@ -20,19 +20,44 @@
             </div>
             <div class="form-group">
                 <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="PlannedStartDate" class="control-label"></label>
-                <input asp-for="PlannedStartDate" class="form-control" />
-                <span asp-validation-for="PlannedStartDate" class="text-danger"></span>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="PlannedStartDateOnly" class="control-label"></label>
+                        <input asp-for="PlannedStartDateOnly" class="form-control" />
+                        <span asp-validation-for="PlannedStartDateOnly" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="PlannedStartTime" class="control-label"></label>
+                        <input asp-for="PlannedStartTime" class="form-control" />
+                        <span asp-validation-for="PlannedStartTime" class="text-danger"></span>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="PlannedEndDate" class="control-label"></label>
-                <input asp-for="PlannedEndDate" class="form-control" />
-                <span asp-validation-for="PlannedEndDate" class="text-danger"></span>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="PlannedEndDateOnly" class="control-label"></label>
+                        <input asp-for="PlannedEndDateOnly" class="form-control" />
+                        <span asp-validation-for="PlannedEndDateOnly" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="PlannedEndTime" class="control-label"></label>
+                        <input asp-for="PlannedEndTime" class="form-control" />
+                        <span asp-validation-for="PlannedEndTime" class="text-danger"></span>
+                    </div>
+                </div>
             </div>
+
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>

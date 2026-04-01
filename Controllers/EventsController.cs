@@ -54,8 +54,25 @@ namespace EventEase.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EventId,Name,Description,PlannedStartDate,PlannedEndDate")] Event @event)
+        public async Task<IActionResult> Create([Bind("EventId,Name,Description,PlannedStartDateOnly,PlannedStartTime,PlannedEndDateOnly,PlannedEndTime")] Event @event)
         {
+            // Combine date and time fields into DateTime properties
+            if (@event.PlannedStartDateOnly.HasValue && @event.PlannedStartTime.HasValue)
+            {
+                @event.PlannedStartDate = @event.PlannedStartDateOnly.Value.Date + @event.PlannedStartTime.Value;
+            }
+
+            if (@event.PlannedEndDateOnly.HasValue && @event.PlannedEndTime.HasValue)
+            {
+                @event.PlannedEndDate = @event.PlannedEndDateOnly.Value.Date + @event.PlannedEndTime.Value;
+            }
+
+            // Remove validation errors for the NotMapped properties
+            ModelState.Remove(nameof(@event.PlannedStartDateOnly));
+            ModelState.Remove(nameof(@event.PlannedStartTime));
+            ModelState.Remove(nameof(@event.PlannedEndDateOnly));
+            ModelState.Remove(nameof(@event.PlannedEndTime));
+
             if (ModelState.IsValid)
             {
                 _context.Add(@event);
@@ -78,6 +95,20 @@ namespace EventEase.Controllers
             {
                 return NotFound();
             }
+
+            // Split DateTime into separate date and time fields for the form
+            if (@event.PlannedStartDate.HasValue)
+            {
+                @event.PlannedStartDateOnly = @event.PlannedStartDate.Value.Date;
+                @event.PlannedStartTime = @event.PlannedStartDate.Value.TimeOfDay;
+            }
+
+            if (@event.PlannedEndDate.HasValue)
+            {
+                @event.PlannedEndDateOnly = @event.PlannedEndDate.Value.Date;
+                @event.PlannedEndTime = @event.PlannedEndDate.Value.TimeOfDay;
+            }
+
             return View(@event);
         }
 
@@ -86,12 +117,37 @@ namespace EventEase.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("EventId,Name,Description,PlannedStartDate,PlannedEndDate")] Event @event)
+        public async Task<IActionResult> Edit(int id, [Bind("EventId,Name,Description,PlannedStartDateOnly,PlannedStartTime,PlannedEndDateOnly,PlannedEndTime")] Event @event)
         {
             if (id != @event.EventId)
             {
                 return NotFound();
             }
+
+            // Combine date and time fields into DateTime properties
+            if (@event.PlannedStartDateOnly.HasValue && @event.PlannedStartTime.HasValue)
+            {
+                @event.PlannedStartDate = @event.PlannedStartDateOnly.Value.Date + @event.PlannedStartTime.Value;
+            }
+            else
+            {
+                @event.PlannedStartDate = null;
+            }
+
+            if (@event.PlannedEndDateOnly.HasValue && @event.PlannedEndTime.HasValue)
+            {
+                @event.PlannedEndDate = @event.PlannedEndDateOnly.Value.Date + @event.PlannedEndTime.Value;
+            }
+            else
+            {
+                @event.PlannedEndDate = null;
+            }
+
+            // Remove validation errors for the NotMapped properties
+            ModelState.Remove(nameof(@event.PlannedStartDateOnly));
+            ModelState.Remove(nameof(@event.PlannedStartTime));
+            ModelState.Remove(nameof(@event.PlannedEndDateOnly));
+            ModelState.Remove(nameof(@event.PlannedEndTime));
 
             if (ModelState.IsValid)
             {
