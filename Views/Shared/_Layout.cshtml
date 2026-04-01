@@ -8,6 +8,21 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/EventEase.styles.css" asp-append-version="true" />
+    <style>
+        html, body {
+            height: 100%;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        main {
+            flex: 1 0 auto;
+        }
+        footer {
+            flex-shrink: 0;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -41,15 +56,18 @@
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="bg-dark text-white text-center py-3 mt-5">
+    <main role="main" class="flex-grow-1">
+        <div class="container pb-3">
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="bg-dark text-white text-center py-3 mt-auto">
         <div class="container">
-            &copy; 2026 - EventEase - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            <small>
+                © 2026 EventEase | Venue Booking Management System
+            </small>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
@@ -58,10 +76,3 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
-<footer class="bg-dark text-white text-center py-3 mt-5">
-    <div class="container">
-        <small>
-            © 2026 EventEase | Venue Booking Management System
-        </small>
-    </div>
-</footer>
