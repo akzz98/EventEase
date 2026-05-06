@@ -117,9 +117,15 @@ namespace EventEase.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("VenueId,Name,Location,Capacity,Description,ImageUrl")] Venue venue)
+        public async Task<IActionResult> Edit(int id, [Bind("VenueId,Name,Location,Capacity,Description,ImageUrl,ImageFile")] Venue venue)
         {
             if (id != venue.VenueId)
+            {
+                return NotFound();
+            }
+
+            var existingVenue = await _context.Venues.AsNoTracking().FirstOrDefaultAsync(v => v.VenueId == id);
+            if (existingVenue == null)
             {
                 return NotFound();
             }
@@ -128,6 +134,27 @@ namespace EventEase.Controllers
             {
                 try
                 {
+                    // Keep the old image if no new file is uploaded
+                    venue.ImageUrl = existingVenue.ImageUrl;
+
+                    if (venue.ImageFile != null && venue.ImageFile.Length > 0)
+                    {
+                        BlobServiceClient blobServiceClient = new BlobServiceClient(_storageConnectionString);
+                        BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(_containerName);
+
+                        await containerClient.CreateIfNotExistsAsync(Azure.Storage.Blobs.Models.PublicAccessType.Blob);
+
+                        string fileName = Guid.NewGuid().ToString() + Path.GetExtension(venue.ImageFile.FileName);
+                        BlobClient blobClient = containerClient.GetBlobClient(fileName);
+
+                        using (var stream = venue.ImageFile.OpenReadStream())
+                        {
+                            await blobClient.UploadAsync(stream, true);
+                        }
+
+                        venue.ImageUrl = blobClient.Uri.ToString();
+                    }
+
                     _context.Update(venue);
                     await _context.SaveChangesAsync();
                 }
@@ -142,8 +169,10 @@ namespace EventEase.Controllers
                         throw;
                     }
                 }
+
                 return RedirectToAction(nameof(Index));
             }
+
             return View(venue);
         }
 
