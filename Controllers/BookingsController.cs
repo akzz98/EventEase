@@ -78,6 +78,19 @@ namespace EventEase.Controllers
             ModelState.Remove(nameof(booking.EndDate));
             ModelState.Remove(nameof(booking.EndTime));
 
+            // --- PART 2: DOUBLE BOOKING PREVENTION ---
+            bool isDoubleBooked = await _context.Bookings.AnyAsync(b =>
+                b.VenueId == booking.VenueId &&
+                booking.StartDateTime < b.EndDateTime &&
+                booking.EndDateTime > b.StartDateTime
+            );
+
+            if (isDoubleBooked)
+            {
+                ModelState.AddModelError("", "⚠️ This venue is already booked for the selected date and time. Please choose a different time slot or venue.");
+            }
+            // --- END DOUBLE BOOKING CHECK ---
+
             if (ModelState.IsValid)
             {
                 booking.CreatedAt = DateTime.Now;
@@ -85,6 +98,7 @@ namespace EventEase.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+
             ViewData["EventId"] = new SelectList(_context.Events, "EventId", "Name", booking.EventId);
             ViewData["VenueId"] = new SelectList(_context.Venues, "VenueId", "Location", booking.VenueId);
             return View(booking);
@@ -144,6 +158,20 @@ namespace EventEase.Controllers
             ModelState.Remove(nameof(booking.EndDate));
             ModelState.Remove(nameof(booking.EndTime));
 
+            //DOUBLE BOOKING PREVENTION (exclude current booking)
+            bool isDoubleBooked = await _context.Bookings.AnyAsync(b =>
+                b.BookingId != booking.BookingId && // Exclude the current booking
+                b.VenueId == booking.VenueId &&
+                booking.StartDateTime < b.EndDateTime &&
+                booking.EndDateTime > b.StartDateTime
+            );
+
+            if (isDoubleBooked)
+            {
+                ModelState.AddModelError("", "⚠️ This venue is already booked for the selected date and time. Please choose a different time slot or venue.");
+            }
+            // --- END DOUBLE BOOKING CHECK ---
+
             if (ModelState.IsValid)
             {
                 try
@@ -164,6 +192,7 @@ namespace EventEase.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+
             ViewData["EventId"] = new SelectList(_context.Events, "EventId", "Name", booking.EventId);
             ViewData["VenueId"] = new SelectList(_context.Venues, "VenueId", "Location", booking.VenueId);
             return View(booking);
