@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EventEase.Models
 {
@@ -22,7 +23,12 @@ namespace EventEase.Models
 
         [MaxLength(500)]
         [Display(Name = "Venue Image URL")]
-        public string? ImageUrl { get; set; } = "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=500&q=60";
+        public string? ImageUrl { get; set; }
+
+        //Add I from file property to recieve images from browser.
+        [NotMapped]
+        [Display(Name = "Upload Venue Image")]
+        public IFormFile? ImageFile { get; set; }
 
         // Navigation Property
         public ICollection<Booking>? Bookings { get; set; }
