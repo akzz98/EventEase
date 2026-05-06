@@ -196,11 +196,21 @@ namespace EventEase.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var @event = await _context.Events.FindAsync(id);
-            if (@event != null)
+
+            if (@event == null)
             {
-                _context.Events.Remove(@event);
+                return NotFound();
             }
 
+            bool hasBookings = await _context.Bookings.AnyAsync(b => b.EventId == id);
+
+            if (hasBookings)
+            {
+                ModelState.AddModelError("", "Cannot delete this event because it is linked to existing bookings.");
+                return View(@event);
+            }
+
+            _context.Events.Remove(@event);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }

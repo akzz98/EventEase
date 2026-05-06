@@ -200,11 +200,25 @@ namespace EventEase.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var venue = await _context.Venues.FindAsync(id);
-            if (venue != null)
+
+            if (venue == null)
             {
-                _context.Venues.Remove(venue);
+                return NotFound();
             }
 
+            // --- PART 2 REQUIREMENT: Check for existing bookings ---
+            bool hasActiveBookings = await _context.Bookings.AnyAsync(b => b.VenueId == id);
+
+            if (hasActiveBookings)
+            {
+                // Add a model error to display to the user
+                ModelState.AddModelError("", "Cannot delete this venue because it has associated bookings. Please remove the bookings first.");
+
+                // Return the Delete view again with the error message
+                return View(venue);
+            }
+
+            _context.Venues.Remove(venue);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }

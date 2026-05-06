@@ -404,3 +404,8 @@ FodyWeavers.xsd
 *.db-wal
 *.sqlite
 *.sqlite3
+
+# Azurite emulator files
+__azurite_db_*.json
+__blobstorage__/
+__queuestorage__/
