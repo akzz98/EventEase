@@ -20,10 +20,29 @@ namespace EventEase.Controllers
         }
 
         // GET: Bookings
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString)
         {
-            var applicationDbContext = _context.Bookings.Include(b => b.Event).Include(b => b.Venue);
-            return View(await applicationDbContext.ToListAsync());
+            // Pass the current search string back to the view
+            ViewData["CurrentFilter"] = searchString;
+
+            var bookings = _context.Bookings
+                .Include(b => b.Event)
+                .Include(b => b.Venue)
+                .AsQueryable();
+
+            // Search Functionality
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                // Try parse as int for BookingId search
+                bool isNumeric = int.TryParse(searchString, out int bookingIdSearch);
+
+                bookings = bookings.Where(b =>
+                    (isNumeric && b.BookingId == bookingIdSearch) ||
+                    b.Event.Name.Contains(searchString)
+                );
+            }
+
+            return View(await bookings.ToListAsync());
         }
 
         // GET: Bookings/Details/5
