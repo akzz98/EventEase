@@ -73,6 +73,15 @@ namespace EventEase.Controllers
             ModelState.Remove(nameof(@event.PlannedEndDateOnly));
             ModelState.Remove(nameof(@event.PlannedEndTime));
 
+            // Validate: End date/time must be after Start date/time
+            if (@event.PlannedStartDate.HasValue && @event.PlannedEndDate.HasValue)
+            {
+                if (@event.PlannedEndDate <= @event.PlannedStartDate)
+                {
+                    ModelState.AddModelError("", "⚠️ End date/time must be AFTER the start date/time.");
+                }
+            }
+
             if (ModelState.IsValid)
             {
                 _context.Add(@event);
@@ -148,6 +157,15 @@ namespace EventEase.Controllers
             ModelState.Remove(nameof(@event.PlannedStartTime));
             ModelState.Remove(nameof(@event.PlannedEndDateOnly));
             ModelState.Remove(nameof(@event.PlannedEndTime));
+
+            // Validate: End date/time must be after Start date/time
+            if (@event.PlannedStartDate.HasValue && @event.PlannedEndDate.HasValue)
+            {
+                if (@event.PlannedEndDate <= @event.PlannedStartDate)
+                {
+                    ModelState.AddModelError("", "⚠️ End date/time must be AFTER the start date/time.");
+                }
+            }
 
             if (ModelState.IsValid)
             {
