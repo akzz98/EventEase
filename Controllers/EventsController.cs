@@ -82,6 +82,29 @@ namespace EventEase.Controllers
                 }
             }
 
+            // Validate: Start date must be in the future
+            if (@event.PlannedStartDate.HasValue && @event.PlannedStartDate <= DateTime.Now)
+            {
+                ModelState.AddModelError("", "⚠️ Start date/time must be in the future.");
+            }
+
+            // Validate: Minimum event duration of 30 minutes
+            if (@event.PlannedStartDate.HasValue && @event.PlannedEndDate.HasValue)
+            {
+                var duration = @event.PlannedEndDate.Value - @event.PlannedStartDate.Value;
+                if (duration.TotalMinutes < 30)
+                {
+                    ModelState.AddModelError("", "⚠️ Event duration must be at least 30 minutes.");
+                }
+            }
+
+            // Validate: No duplicate event names
+            bool duplicateName = await _context.Events.AnyAsync(e => e.Name == @event.Name);
+            if (duplicateName)
+            {
+                ModelState.AddModelError("", "⚠️ An event with this name already exists.");
+            }
+
             if (ModelState.IsValid)
             {
                 _context.Add(@event);
@@ -167,6 +190,23 @@ namespace EventEase.Controllers
                 }
             }
 
+            // Validate: Minimum event duration of 30 minutes
+            if (@event.PlannedStartDate.HasValue && @event.PlannedEndDate.HasValue)
+            {
+                var duration = @event.PlannedEndDate.Value - @event.PlannedStartDate.Value;
+                if (duration.TotalMinutes < 30)
+                {
+                    ModelState.AddModelError("", "⚠️ Event duration must be at least 30 minutes.");
+                }
+            }
+
+            // Validate: No duplicate event names (exclude current event)
+            bool duplicateName = await _context.Events.AnyAsync(e => e.Name == @event.Name && e.EventId != @event.EventId);
+            if (duplicateName)
+            {
+                ModelState.AddModelError("", "⚠️ An event with this name already exists.");
+            }
+
             if (ModelState.IsValid)
             {
                 try
@@ -220,6 +260,7 @@ namespace EventEase.Controllers
                 return NotFound();
             }
 
+            // Restrict deletion if event has existing bookings
             bool hasBookings = await _context.Bookings.AnyAsync(b => b.EventId == id);
 
             if (hasBookings)

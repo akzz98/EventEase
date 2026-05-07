@@ -97,6 +97,37 @@ namespace EventEase.Controllers
             ModelState.Remove(nameof(booking.EndDate));
             ModelState.Remove(nameof(booking.EndTime));
 
+            // Validate: End date/time must be after start date/time
+            if (booking.EndDateTime <= booking.StartDateTime)
+                ModelState.AddModelError("", "⚠️ End date/time must be AFTER the start date/time.");
+
+            // Validate: Booking must be in the future
+            if (booking.StartDateTime <= DateTime.Now)
+                ModelState.AddModelError("", "⚠️ Booking start date/time must be in the future.");
+
+            // Validate: Minimum booking duration of 30 minutes
+            var duration = booking.EndDateTime - booking.StartDateTime;
+            if (duration.TotalMinutes < 30)
+                ModelState.AddModelError("", "⚠️ Booking duration must be at least 30 minutes.");
+
+            // Validate: Booking dates must fall within the event's planned dates
+            var selectedEvent = await _context.Events.FindAsync(booking.EventId);
+            if (selectedEvent != null && selectedEvent.PlannedStartDate.HasValue && selectedEvent.PlannedEndDate.HasValue)
+            {
+                if (booking.StartDateTime < selectedEvent.PlannedStartDate.Value ||
+                    booking.EndDateTime > selectedEvent.PlannedEndDate.Value)
+                {
+                    ModelState.AddModelError("", $"⚠️ Booking dates must fall within the event's planned dates " +
+                        $"({selectedEvent.PlannedStartDate.Value:dd MMM yyyy HH:mm} - {selectedEvent.PlannedEndDate.Value:dd MMM yyyy HH:mm}).");
+                }
+            }
+
+            // Validate: No duplicate booking for same event + venue
+            bool duplicateBooking = await _context.Bookings.AnyAsync(b =>
+                b.VenueId == booking.VenueId && b.EventId == booking.EventId);
+            if (duplicateBooking)
+                ModelState.AddModelError("", "⚠️ This event is already booked at this venue.");
+
             // --- PART 2: DOUBLE BOOKING PREVENTION ---
             bool isDoubleBooked = await _context.Bookings.AnyAsync(b =>
                 b.VenueId == booking.VenueId &&
@@ -177,7 +208,35 @@ namespace EventEase.Controllers
             ModelState.Remove(nameof(booking.EndDate));
             ModelState.Remove(nameof(booking.EndTime));
 
-            //DOUBLE BOOKING PREVENTION (exclude current booking)
+            // Validate: End date/time must be after start date/time
+            if (booking.EndDateTime <= booking.StartDateTime)
+                ModelState.AddModelError("", "⚠️ End date/time must be AFTER the start date/time.");
+
+            // Validate: Minimum booking duration of 30 minutes
+            var duration = booking.EndDateTime - booking.StartDateTime;
+            if (duration.TotalMinutes < 30)
+                ModelState.AddModelError("", "⚠️ Booking duration must be at least 30 minutes.");
+
+            // Validate: Booking dates must fall within the event's planned dates
+            var selectedEvent = await _context.Events.FindAsync(booking.EventId);
+            if (selectedEvent != null && selectedEvent.PlannedStartDate.HasValue && selectedEvent.PlannedEndDate.HasValue)
+            {
+                if (booking.StartDateTime < selectedEvent.PlannedStartDate.Value ||
+                    booking.EndDateTime > selectedEvent.PlannedEndDate.Value)
+                {
+                    ModelState.AddModelError("", $"⚠️ Booking dates must fall within the event's planned dates " +
+                        $"({selectedEvent.PlannedStartDate.Value:dd MMM yyyy HH:mm} - {selectedEvent.PlannedEndDate.Value:dd MMM yyyy HH:mm}).");
+                }
+            }
+
+            // Validate: No duplicate booking for same event + venue (exclude current booking)
+            bool duplicateBooking = await _context.Bookings.AnyAsync(b =>
+                b.BookingId != booking.BookingId &&
+                b.VenueId == booking.VenueId && b.EventId == booking.EventId);
+            if (duplicateBooking)
+                ModelState.AddModelError("", "⚠️ This event is already booked at this venue.");
+
+            // DOUBLE BOOKING PREVENTION (exclude current booking)
             bool isDoubleBooked = await _context.Bookings.AnyAsync(b =>
                 b.BookingId != booking.BookingId && // Exclude the current booking
                 b.VenueId == booking.VenueId &&
