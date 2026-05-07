@@ -62,6 +62,34 @@ namespace EventEase.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("VenueId,Name,Location,Capacity,Description,ImageFile")] Venue venue)
         {
+            // Validate: No duplicate venue names
+            bool duplicateName = await _context.Venues.AnyAsync(v => v.Name == venue.Name);
+            if (duplicateName)
+                ModelState.AddModelError("", "⚠️ A venue with this name already exists.");
+
+            // Validate: Capacity must be greater than zero
+            if (venue.Capacity <= 0)
+                ModelState.AddModelError("", "⚠️ Capacity must be greater than zero.");
+
+            // Validate: Capacity cannot exceed 100,000
+            if (venue.Capacity > 100000)
+                ModelState.AddModelError("", "⚠️ Capacity cannot exceed 100,000.");
+
+            // Validate: Image file type and size
+            if (venue.ImageFile != null && venue.ImageFile.Length > 0)
+            {
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                var extension = Path.GetExtension(venue.ImageFile.FileName).ToLowerInvariant();
+
+                // Validate file type
+                if (!allowedExtensions.Contains(extension))
+                    ModelState.AddModelError("", "⚠️ Only image files are allowed (.jpg, .jpeg, .png, .gif, .webp).");
+
+                // Validate file size (max 5MB)
+                if (venue.ImageFile.Length > 5 * 1024 * 1024)
+                    ModelState.AddModelError("", "⚠️ Image file size cannot exceed 5MB.");
+            }
+
             if (ModelState.IsValid)
             {
                 // --- BLOB UPLOAD LOGIC START ---
@@ -128,6 +156,34 @@ namespace EventEase.Controllers
             if (existingVenue == null)
             {
                 return NotFound();
+            }
+
+            // Validate: No duplicate venue names (exclude current venue)
+            bool duplicateName = await _context.Venues.AnyAsync(v => v.Name == venue.Name && v.VenueId != venue.VenueId);
+            if (duplicateName)
+                ModelState.AddModelError("", "⚠️ A venue with this name already exists.");
+
+            // Validate: Capacity must be greater than zero
+            if (venue.Capacity <= 0)
+                ModelState.AddModelError("", "⚠️ Capacity must be greater than zero.");
+
+            // Validate: Capacity cannot exceed 100,000
+            if (venue.Capacity > 100000)
+                ModelState.AddModelError("", "⚠️ Capacity cannot exceed 100,000.");
+
+            // Validate: Image file type and size
+            if (venue.ImageFile != null && venue.ImageFile.Length > 0)
+            {
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                var extension = Path.GetExtension(venue.ImageFile.FileName).ToLowerInvariant();
+
+                // Validate file type
+                if (!allowedExtensions.Contains(extension))
+                    ModelState.AddModelError("", "⚠️ Only image files are allowed (.jpg, .jpeg, .png, .gif, .webp).");
+
+                // Validate file size (max 5MB)
+                if (venue.ImageFile.Length > 5 * 1024 * 1024)
+                    ModelState.AddModelError("", "⚠️ Image file size cannot exceed 5MB.");
             }
 
             if (ModelState.IsValid)
@@ -206,7 +262,7 @@ namespace EventEase.Controllers
                 return NotFound();
             }
 
-            // --- PART 2 REQUIREMENT: Check for existing bookings ---
+            // Check for existing booking
             bool hasActiveBookings = await _context.Bookings.AnyAsync(b => b.VenueId == id);
 
             if (hasActiveBookings)
