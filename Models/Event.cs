@@ -14,6 +14,10 @@ namespace EventEase.Models
 
         public string? Description { get; set; }
 
+        [Required]
+        [Display(Name = "Event Type")]
+        public int EventTypeId { get; set; }
+
         [Display(Name = "Planned Start Date & Time")]
         public DateTime? PlannedStartDate { get; set; }
 
@@ -41,7 +45,9 @@ namespace EventEase.Models
         [DataType(DataType.Time)]
         public TimeSpan? PlannedEndTime { get; set; }
 
-        // Navigation Property
+        [ForeignKey(nameof(EventTypeId))]
+        public EventType? EventType { get; set; }
+
         public ICollection<Booking>? Bookings { get; set; }
     }
 }
