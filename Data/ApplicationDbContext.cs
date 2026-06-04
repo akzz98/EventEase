@@ -35,6 +35,7 @@ namespace EventEase.Data
             modelBuilder.Entity<EventType>(entity =>
             {
                 entity.HasKey(e => e.EventTypeId);
+                entity.Property(e => e.EventTypeId).ValueGeneratedNever();
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
                 entity.HasIndex(e => e.Name).IsUnique();
 
