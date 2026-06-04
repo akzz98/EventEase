@@ -45,7 +45,12 @@ namespace EventEase.Data
                     new EventType { EventTypeId = 3, Name = "Corporate Meeting" },
                     new EventType { EventTypeId = 4, Name = "Concert" },
                     new EventType { EventTypeId = 5, Name = "Workshop" },
-                    new EventType { EventTypeId = 6, Name = "Private Party" }
+                    new EventType { EventTypeId = 6, Name = "Private Party" },
+                    new EventType { EventTypeId = 7, Name = "Sports" },
+                    new EventType { EventTypeId = 8, Name = "Exhibition" },
+                    new EventType { EventTypeId = 9, Name = "Festival" },
+                    new EventType { EventTypeId = 10, Name = "Seminar" },
+                    new EventType { EventTypeId = 11, Name = "Charity Fundraiser" }
                 );
             });
 
