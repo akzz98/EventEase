@@ -15,6 +15,7 @@ namespace EventEase.Data
         public DbSet<Venue> Venues { get; set; }
         public DbSet<Event> Events { get; set; }
         public DbSet<Booking> Bookings { get; set; }
+        public DbSet<EventType> EventTypes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -30,11 +31,34 @@ namespace EventEase.Data
                 entity.Property(e => e.ImageUrl).HasMaxLength(500);
             });
 
+            // Configure EventType
+            modelBuilder.Entity<EventType>(entity =>
+            {
+                entity.HasKey(e => e.EventTypeId);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.HasIndex(e => e.Name).IsUnique();
+
+                entity.HasData(
+                    new EventType { EventTypeId = 1, Name = "Conference" },
+                    new EventType { EventTypeId = 2, Name = "Wedding" },
+                    new EventType { EventTypeId = 3, Name = "Corporate Meeting" },
+                    new EventType { EventTypeId = 4, Name = "Concert" },
+                    new EventType { EventTypeId = 5, Name = "Workshop" },
+                    new EventType { EventTypeId = 6, Name = "Private Party" }
+                );
+            });
+
             // Configure Event
             modelBuilder.Entity<Event>(entity =>
             {
                 entity.HasKey(e => e.EventId);
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.EventTypeId).IsRequired();
+
+                entity.HasOne(e => e.EventType)
+                    .WithMany(et => et.Events)
+                    .HasForeignKey(e => e.EventTypeId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             // Configure Booking
