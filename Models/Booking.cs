@@ -24,7 +24,7 @@ namespace EventEase.Models
 
         [Required]
         [MaxLength(50)]
-        public string Status { get; set; } = "Confirmed";
+        public string Status { get; set; } = BookingStatuses.Default;
 
         // --- NOT MAPPED: Used only for the form UI ---
 

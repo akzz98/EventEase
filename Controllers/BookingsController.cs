@@ -112,7 +112,8 @@ namespace EventEase.Controllers
         {
             ViewData["EventId"] = new SelectList(_context.Events, "EventId", "Name");
             ViewData["VenueId"] = new SelectList(_context.Venues, "VenueId", "Location");
-            return View();
+            SetStatusSelectList(BookingStatuses.Default);
+            return View(new Booking { Status = BookingStatuses.Default });
         }
 
         // POST: Bookings/Create
@@ -181,6 +182,8 @@ namespace EventEase.Controllers
             {
                 ModelState.AddModelError("", "⚠️ This venue is already booked for the selected date and time. Please choose a different time slot or venue.");
             }
+
+            ValidateAndNormalizeStatus(booking);
             // --- END DOUBLE BOOKING CHECK ---
 
             if (ModelState.IsValid)
@@ -193,6 +196,7 @@ namespace EventEase.Controllers
 
             ViewData["EventId"] = new SelectList(_context.Events, "EventId", "Name", booking.EventId);
             ViewData["VenueId"] = new SelectList(_context.Venues, "VenueId", "Location", booking.VenueId);
+            SetStatusSelectList(booking.Status);
             return View(booking);
         }
 
@@ -218,6 +222,7 @@ namespace EventEase.Controllers
 
             ViewData["EventId"] = new SelectList(_context.Events, "EventId", "Name", booking.EventId);
             ViewData["VenueId"] = new SelectList(_context.Venues, "VenueId", "Location", booking.VenueId);
+            SetStatusSelectList(booking.Status);
             return View(booking);
         }
 
@@ -290,6 +295,8 @@ namespace EventEase.Controllers
             {
                 ModelState.AddModelError("", "⚠️ This venue is already booked for the selected date and time. Please choose a different time slot or venue.");
             }
+
+            ValidateAndNormalizeStatus(booking);
             // --- END DOUBLE BOOKING CHECK ---
 
             if (ModelState.IsValid)
@@ -315,6 +322,7 @@ namespace EventEase.Controllers
 
             ViewData["EventId"] = new SelectList(_context.Events, "EventId", "Name", booking.EventId);
             ViewData["VenueId"] = new SelectList(_context.Venues, "VenueId", "Location", booking.VenueId);
+            SetStatusSelectList(booking.Status);
             return View(booking);
         }
 
@@ -356,6 +364,30 @@ namespace EventEase.Controllers
         private bool BookingExists(int id)
         {
             return _context.Bookings.Any(e => e.BookingId == id);
+        }
+
+        private void SetStatusSelectList(string? selected)
+        {
+            var items = BookingStatuses.SelectOptions.ToList();
+            if (!string.IsNullOrWhiteSpace(selected) &&
+                !items.Any(s => string.Equals(s, selected, StringComparison.OrdinalIgnoreCase)))
+            {
+                items.Insert(0, selected);
+            }
+
+            ViewData["Status"] = new SelectList(items, selected ?? BookingStatuses.Default);
+        }
+
+        private void ValidateAndNormalizeStatus(Booking booking)
+        {
+            if (!BookingStatuses.TryNormalize(booking.Status, out var normalized))
+            {
+                ModelState.AddModelError(nameof(booking.Status),
+                    "⚠️ Please select a valid status: Booked, Reserved, Cancelled, or Completed.");
+                return;
+            }
+
+            booking.Status = normalized;
         }
     }
 }
