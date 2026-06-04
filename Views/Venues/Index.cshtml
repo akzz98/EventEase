@@ -7,8 +7,60 @@
 <h2 class="mb-4">Venue Management</h2>
 
 <p>
-    <a asp-action="Create" class="btn btn-primary mb-3">+ Create New</a>
+    <a asp-action="Create" class="btn btn-primary">+ Create New</a>
 </p>
+
+<div class="card shadow-sm mb-4 mt-3">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label" for="fromDate">From Date</label>
+                <input type="date"
+                       id="fromDate"
+                       name="fromDate"
+                       value="@ViewData["FromDateFilter"]"
+                       class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="toDate">To Date</label>
+                <input type="date"
+                       id="toDate"
+                       name="toDate"
+                       value="@ViewData["ToDateFilter"]"
+                       class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <div class="form-check mt-4">
+                    <input type="checkbox"
+                           class="form-check-input"
+                           id="availableOnly"
+                           name="availableOnly"
+                           value="true"
+                           @(ViewData["AvailableOnlyFilter"] is true ? "checked" : null) />
+                    <label class="form-check-label" for="availableOnly">
+                        Available venues only
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-auto d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (ViewData["AvailabilityFilterError"] != null)
+{
+    <div class="alert alert-warning">@ViewData["AvailabilityFilterError"]</div>
+}
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No venues found matching your filters.</div>
+}
+else
+{
 <table class="table table-striped table-hover table-bordered shadow-sm">
     <thead class="table-dark">
         <tr>
@@ -64,3 +116,4 @@
 }
     </tbody>
 </table>
+}

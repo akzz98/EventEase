@@ -26,9 +26,34 @@ namespace EventEase.Controllers
         }
 
         // GET: Venues
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, bool availableOnly = false)
         {
-            return View(await _context.Venues.ToListAsync());
+            ViewData["FromDateFilter"] = fromDate?.ToString("yyyy-MM-dd");
+            ViewData["ToDateFilter"] = toDate?.ToString("yyyy-MM-dd");
+            ViewData["AvailableOnlyFilter"] = availableOnly;
+
+            var venues = _context.Venues.AsQueryable();
+
+            if (availableOnly)
+            {
+                if (!fromDate.HasValue || !toDate.HasValue)
+                {
+                    ViewData["AvailabilityFilterError"] =
+                        "Select both from and to dates to show available venues only.";
+                }
+                else
+                {
+                    var rangeStart = fromDate.Value.Date;
+                    var rangeEnd = toDate.Value.Date.AddDays(1);
+
+                    venues = venues.Where(v => !_context.Bookings.Any(b =>
+                        b.VenueId == v.VenueId &&
+                        b.StartDateTime < rangeEnd &&
+                        b.EndDateTime > rangeStart));
+                }
+            }
+
+            return View(await venues.ToListAsync());
         }
 
         // GET: Venues/Details/5
