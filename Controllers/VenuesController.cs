@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using EventEase.Data;
 using EventEase.Models;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Http;
 
 namespace EventEase.Controllers
@@ -15,14 +16,19 @@ namespace EventEase.Controllers
     public class VenuesController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly string _storageConnectionString;
-        private readonly string _containerName;
+        private readonly IWebHostEnvironment _environment;
+        private readonly string? _storageConnectionString;
+        private readonly string? _containerName;
 
-        public VenuesController(ApplicationDbContext context, IConfiguration configuration)
+        public VenuesController(
+            ApplicationDbContext context,
+            IConfiguration configuration,
+            IWebHostEnvironment environment)
         {
             _context = context;
-            _storageConnectionString = configuration.GetValue<string>("AzureStorage:ConnectionString");
-            _containerName = configuration.GetValue<string>("AzureStorage:ContainerName");
+            _environment = environment;
+            _storageConnectionString = ResolveStorageConnectionString(configuration);
+            _containerName = configuration["AzureStorage:ContainerName"]?.Trim();
         }
 
         // GET: Venues
@@ -117,34 +123,25 @@ namespace EventEase.Controllers
 
             if (ModelState.IsValid)
             {
-                // --- BLOB UPLOAD LOGIC START ---
                 if (venue.ImageFile != null && venue.ImageFile.Length > 0)
                 {
-                    // Create the blob client
-                    BlobServiceClient blobServiceClient = new BlobServiceClient(_storageConnectionString);
-                    BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(_containerName);
-
-                    // Ensure container exists
-                    await containerClient.CreateIfNotExistsAsync(Azure.Storage.Blobs.Models.PublicAccessType.Blob);
-
-                    // Create a unique name for the file
-                    string fileName = Guid.NewGuid().ToString() + Path.GetExtension(venue.ImageFile.FileName);
-                    BlobClient blobClient = containerClient.GetBlobClient(fileName);
-
-                    // Upload the file
-                    using (var stream = venue.ImageFile.OpenReadStream())
+                    var uploadResult = await UploadVenueImageAsync(venue.ImageFile);
+                    if (uploadResult.ErrorMessage != null)
                     {
-                        await blobClient.UploadAsync(stream, true);
+                        ModelState.AddModelError("", uploadResult.ErrorMessage);
                     }
-
-                    // Save the URL to the database
-                    venue.ImageUrl = blobClient.Uri.ToString();
+                    else
+                    {
+                        venue.ImageUrl = uploadResult.ImageUrl;
+                    }
                 }
-                // --- BLOB UPLOAD LOGIC END ---
 
-                _context.Add(venue);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                if (ModelState.IsValid)
+                {
+                    _context.Add(venue);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
             }
             return View(venue);
         }
@@ -220,20 +217,20 @@ namespace EventEase.Controllers
 
                     if (venue.ImageFile != null && venue.ImageFile.Length > 0)
                     {
-                        BlobServiceClient blobServiceClient = new BlobServiceClient(_storageConnectionString);
-                        BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(_containerName);
-
-                        await containerClient.CreateIfNotExistsAsync(Azure.Storage.Blobs.Models.PublicAccessType.Blob);
-
-                        string fileName = Guid.NewGuid().ToString() + Path.GetExtension(venue.ImageFile.FileName);
-                        BlobClient blobClient = containerClient.GetBlobClient(fileName);
-
-                        using (var stream = venue.ImageFile.OpenReadStream())
+                        var uploadResult = await UploadVenueImageAsync(venue.ImageFile);
+                        if (uploadResult.ErrorMessage != null)
                         {
-                            await blobClient.UploadAsync(stream, true);
+                            ModelState.AddModelError("", uploadResult.ErrorMessage);
                         }
+                        else
+                        {
+                            venue.ImageUrl = uploadResult.ImageUrl;
+                        }
+                    }
 
-                        venue.ImageUrl = blobClient.Uri.ToString();
+                    if (!ModelState.IsValid)
+                    {
+                        return View(venue);
                     }
 
                     _context.Update(venue);
@@ -307,6 +304,120 @@ namespace EventEase.Controllers
         private bool VenueExists(int id)
         {
             return _context.Venues.Any(e => e.VenueId == id);
+        }
+
+        private bool IsBlobStorageConfigured(out string errorMessage)
+        {
+            if (string.IsNullOrWhiteSpace(_storageConnectionString))
+            {
+                errorMessage = "⚠️ Azure Storage is not configured. In App Service → Configuration → Application settings, add AzureStorage__ConnectionString (full Access keys string). Or use Connection strings → Custom → name AzureStorage.";
+                return false;
+            }
+
+            if (string.Equals(_storageConnectionString, "CONFIGURE_IN_AZURE_APP_SERVICE", StringComparison.OrdinalIgnoreCase))
+            {
+                errorMessage = "⚠️ Azure Storage still uses the production placeholder. Set AzureStorage__ConnectionString in App Service Application settings.";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(_containerName))
+            {
+                errorMessage = "⚠️ Azure Storage container name is not configured.";
+                return false;
+            }
+
+            if (!_environment.IsDevelopment() &&
+                (_storageConnectionString.Contains("UseDevelopmentStorage", StringComparison.OrdinalIgnoreCase) ||
+                 _storageConnectionString.Contains("AccountName=devstoreaccount1", StringComparison.OrdinalIgnoreCase)))
+            {
+                errorMessage = "⚠️ Production must use the Azure Storage account connection string (cldveventeasestg), not Azurite.";
+                return false;
+            }
+
+            if (!_storageConnectionString.Contains("AccountName=", StringComparison.OrdinalIgnoreCase) &&
+                !_storageConnectionString.Contains("UseDevelopmentStorage", StringComparison.OrdinalIgnoreCase))
+            {
+                errorMessage = "⚠️ Azure Storage connection string is invalid. Paste the full string from Storage account → Access keys.";
+                return false;
+            }
+
+            errorMessage = string.Empty;
+            return true;
+        }
+
+        private async Task<(string? ImageUrl, string? ErrorMessage)> UploadVenueImageAsync(IFormFile imageFile)
+        {
+            if (!IsBlobStorageConfigured(out var configError))
+            {
+                return (null, configError);
+            }
+
+            try
+            {
+                var blobServiceClient = new BlobServiceClient(_storageConnectionString);
+                var containerClient = blobServiceClient.GetBlobContainerClient(_containerName!);
+
+                if (_environment.IsDevelopment())
+                {
+                    await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
+                }
+
+                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(imageFile.FileName);
+                var blobClient = containerClient.GetBlobClient(fileName);
+
+                using (var stream = imageFile.OpenReadStream())
+                {
+                    await blobClient.UploadAsync(stream, overwrite: true);
+                }
+
+                return (blobClient.Uri.ToString(), null);
+            }
+            catch (Azure.RequestFailedException ex)
+            {
+                string accountHint = string.Empty;
+                try
+                {
+                    accountHint = new BlobServiceClient(_storageConnectionString).AccountName;
+                    accountHint = $" Account in use: {accountHint}.";
+                }
+                catch
+                {
+                    // Connection string could not be parsed for diagnostics.
+                }
+
+                string hint = ex.Status == 400
+                    ? " The storage hostname is invalid — remove quotes, labels (e.g. \"Blob storage\"), and use the exact string from cldveventeasestg → Access keys → Connection string."
+                    : $" Azure returned: {ex.Message}";
+
+                return (null, $"⚠️ Image upload failed ({ex.Status}).{accountHint}{hint} Container setting: AzureStorage__ContainerName = venue-images.");
+            }
+        }
+
+        private static string? ResolveStorageConnectionString(IConfiguration configuration)
+        {
+            string? value =
+                configuration.GetConnectionString("AzureStorage")
+                ?? configuration["AzureStorage:ConnectionString"];
+
+            return NormalizeSettingValue(value);
+        }
+
+        private static string? NormalizeSettingValue(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            value = value.Trim();
+
+            if ((value.StartsWith('"') && value.EndsWith('"')) ||
+                (value.StartsWith('\'') && value.EndsWith('\'')))
+            {
+                value = value[1..^1].Trim();
+            }
+
+            return value;
         }
     }
 }
