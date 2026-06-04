@@ -49,6 +49,21 @@ namespace EventEase.Models
             return true;
         }
 
+        public static IReadOnlyList<string> GetStatusesMatchingFilter(string filterStatus)
+        {
+            if (!TryNormalize(filterStatus, out var normalized))
+            {
+                return Array.Empty<string>();
+            }
+
+            if (normalized == Booked)
+            {
+                return new[] { Booked, Confirmed, "booked" };
+            }
+
+            return new[] { normalized };
+        }
+
         public static string GetBadgeClass(string? status)
         {
             if (TryNormalize(status, out var normalized))

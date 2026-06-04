@@ -24,6 +24,7 @@ namespace EventEase.Controllers
             string searchString,
             int? eventTypeId,
             int? venueId,
+            string status,
             DateTime? fromDate,
             DateTime? toDate)
         {
@@ -40,6 +41,9 @@ namespace EventEase.Controllers
                 "VenueId",
                 "Name",
                 venueId);
+            ViewData["StatusFilter"] = new SelectList(
+                BookingStatuses.SelectOptions,
+                status);
 
             var bookings = _context.Bookings
                 .Include(b => b.Event)
@@ -55,6 +59,12 @@ namespace EventEase.Controllers
             if (venueId.HasValue)
             {
                 bookings = bookings.Where(b => b.VenueId == venueId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(status) && BookingStatuses.TryNormalize(status, out var filterStatus))
+            {
+                var statusValues = BookingStatuses.GetStatusesMatchingFilter(filterStatus);
+                bookings = bookings.Where(b => statusValues.Contains(b.Status));
             }
 
             if (fromDate.HasValue && toDate.HasValue)
