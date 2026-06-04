@@ -20,11 +20,61 @@ namespace EventEase.Controllers
         }
 
         // GET: Events
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            string searchString,
+            int? eventTypeId,
+            DateTime? fromDate,
+            DateTime? toDate)
         {
-            return View(await _context.Events
+            ViewData["CurrentFilter"] = searchString;
+            ViewData["FromDateFilter"] = fromDate?.ToString("yyyy-MM-dd");
+            ViewData["ToDateFilter"] = toDate?.ToString("yyyy-MM-dd");
+            SetEventTypeSelectList(eventTypeId);
+
+            var events = _context.Events
                 .Include(e => e.EventType)
-                .ToListAsync());
+                .AsQueryable();
+
+            if (eventTypeId.HasValue)
+            {
+                events = events.Where(e => e.EventTypeId == eventTypeId.Value);
+            }
+
+            if (fromDate.HasValue && toDate.HasValue)
+            {
+                var rangeStart = fromDate.Value.Date;
+                var rangeEnd = toDate.Value.Date.AddDays(1);
+                events = events.Where(e =>
+                    e.PlannedStartDate.HasValue &&
+                    e.PlannedEndDate.HasValue &&
+                    e.PlannedStartDate < rangeEnd &&
+                    e.PlannedEndDate > rangeStart);
+            }
+            else if (fromDate.HasValue)
+            {
+                var rangeStart = fromDate.Value.Date;
+                events = events.Where(e =>
+                    e.PlannedEndDate.HasValue && e.PlannedEndDate > rangeStart);
+            }
+            else if (toDate.HasValue)
+            {
+                var rangeEnd = toDate.Value.Date.AddDays(1);
+                events = events.Where(e =>
+                    e.PlannedStartDate.HasValue && e.PlannedStartDate < rangeEnd);
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                bool isNumeric = int.TryParse(searchString, out int eventIdSearch);
+
+                events = events.Where(e =>
+                    (isNumeric && e.EventId == eventIdSearch) ||
+                    e.Name.Contains(searchString) ||
+                    (e.Description != null && e.Description.Contains(searchString)) ||
+                    (e.EventType != null && e.EventType.Name.Contains(searchString)));
+            }
+
+            return View(await events.ToListAsync());
         }
 
         // GET: Events/Details/5
