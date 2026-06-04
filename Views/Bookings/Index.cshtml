@@ -6,24 +6,61 @@
 
 <h2 class="mb-4">Booking Management</h2>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<p>
     <a asp-action="Create" class="btn btn-primary">+ Create New Booking</a>
+</p>
 
-    <!-- PART 2: SEARCH BAR -->
-    <form method="get" asp-action="Index" class="d-flex gap-2">
-        <input type="text"
-               name="searchString"
-               value="@ViewData["CurrentFilter"]"
-               class="form-control"
-               placeholder="Search by Booking ID or Event Name..." />
-        <button type="submit" class="btn btn-outline-primary">Search</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
-    </form>
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label" for="searchString">Search</label>
+                <input type="text"
+                       id="searchString"
+                       name="searchString"
+                       value="@ViewData["CurrentFilter"]"
+                       class="form-control"
+                       placeholder="Booking ID or event name..." />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="eventTypeId">Event Type</label>
+                <select name="eventTypeId" id="eventTypeId" class="form-select" asp-items="ViewBag.EventTypeId">
+                    <option value="">All types</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="venueId">Venue</label>
+                <select name="venueId" id="venueId" class="form-select" asp-items="ViewBag.VenueId">
+                    <option value="">All venues</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="fromDate">From Date</label>
+                <input type="date"
+                       id="fromDate"
+                       name="fromDate"
+                       value="@ViewData["FromDateFilter"]"
+                       class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="toDate">To Date</label>
+                <input type="date"
+                       id="toDate"
+                       name="toDate"
+                       value="@ViewData["ToDateFilter"]"
+                       class="form-control" />
+            </div>
+            <div class="col-md-auto d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
 </div>
 
 @if (!Model.Any())
 {
-    <div class="alert alert-info">No bookings found matching your search.</div>
+    <div class="alert alert-info">No bookings found matching your filters.</div>
 }
 else
 {
