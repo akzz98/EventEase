@@ -22,7 +22,9 @@ namespace EventEase.Controllers
         // GET: Events
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Events.ToListAsync());
+            return View(await _context.Events
+                .Include(e => e.EventType)
+                .ToListAsync());
         }
 
         // GET: Events/Details/5
@@ -34,6 +36,7 @@ namespace EventEase.Controllers
             }
 
             var @event = await _context.Events
+                .Include(e => e.EventType)
                 .FirstOrDefaultAsync(m => m.EventId == id);
             if (@event == null)
             {
@@ -46,6 +49,7 @@ namespace EventEase.Controllers
         // GET: Events/Create
         public IActionResult Create()
         {
+            SetEventTypeSelectList();
             return View();
         }
 
@@ -54,7 +58,7 @@ namespace EventEase.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EventId,Name,Description,PlannedStartDateOnly,PlannedStartTime,PlannedEndDateOnly,PlannedEndTime")] Event @event)
+        public async Task<IActionResult> Create([Bind("EventId,Name,Description,EventTypeId,PlannedStartDateOnly,PlannedStartTime,PlannedEndDateOnly,PlannedEndTime")] Event @event)
         {
             // Combine date and time fields into DateTime properties
             if (@event.PlannedStartDateOnly.HasValue && @event.PlannedStartTime.HasValue)
@@ -105,12 +109,19 @@ namespace EventEase.Controllers
                 ModelState.AddModelError("", "⚠️ An event with this name already exists.");
             }
 
+            if (!await _context.EventTypes.AnyAsync(t => t.EventTypeId == @event.EventTypeId))
+            {
+                ModelState.AddModelError(nameof(@event.EventTypeId), "Please select a valid event type.");
+            }
+
             if (ModelState.IsValid)
             {
                 _context.Add(@event);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+
+            SetEventTypeSelectList(@event.EventTypeId);
             return View(@event);
         }
 
@@ -141,6 +152,7 @@ namespace EventEase.Controllers
                 @event.PlannedEndTime = @event.PlannedEndDate.Value.TimeOfDay;
             }
 
+            SetEventTypeSelectList(@event.EventTypeId);
             return View(@event);
         }
 
@@ -149,7 +161,7 @@ namespace EventEase.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("EventId,Name,Description,PlannedStartDateOnly,PlannedStartTime,PlannedEndDateOnly,PlannedEndTime")] Event @event)
+        public async Task<IActionResult> Edit(int id, [Bind("EventId,Name,Description,EventTypeId,PlannedStartDateOnly,PlannedStartTime,PlannedEndDateOnly,PlannedEndTime")] Event @event)
         {
             if (id != @event.EventId)
             {
@@ -207,6 +219,11 @@ namespace EventEase.Controllers
                 ModelState.AddModelError("", "⚠️ An event with this name already exists.");
             }
 
+            if (!await _context.EventTypes.AnyAsync(t => t.EventTypeId == @event.EventTypeId))
+            {
+                ModelState.AddModelError(nameof(@event.EventTypeId), "Please select a valid event type.");
+            }
+
             if (ModelState.IsValid)
             {
                 try
@@ -227,6 +244,8 @@ namespace EventEase.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+
+            SetEventTypeSelectList(@event.EventTypeId);
             return View(@event);
         }
 
@@ -239,6 +258,7 @@ namespace EventEase.Controllers
             }
 
             var @event = await _context.Events
+                .Include(e => e.EventType)
                 .FirstOrDefaultAsync(m => m.EventId == id);
             if (@event == null)
             {
@@ -277,6 +297,15 @@ namespace EventEase.Controllers
         private bool EventExists(int id)
         {
             return _context.Events.Any(e => e.EventId == id);
+        }
+
+        private void SetEventTypeSelectList(int? selectedEventTypeId = null)
+        {
+            ViewData["EventTypeId"] = new SelectList(
+                _context.EventTypes.OrderBy(t => t.Name),
+                "EventTypeId",
+                "Name",
+                selectedEventTypeId);
         }
     }
 }
