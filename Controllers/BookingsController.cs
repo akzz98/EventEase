@@ -20,26 +20,68 @@ namespace EventEase.Controllers
         }
 
         // GET: Bookings
-        public async Task<IActionResult> Index(string searchString)
+        public async Task<IActionResult> Index(
+            string searchString,
+            int? eventTypeId,
+            int? venueId,
+            DateTime? fromDate,
+            DateTime? toDate)
         {
-            // Pass the current search string back to the view
             ViewData["CurrentFilter"] = searchString;
+            ViewData["FromDateFilter"] = fromDate?.ToString("yyyy-MM-dd");
+            ViewData["ToDateFilter"] = toDate?.ToString("yyyy-MM-dd");
+            ViewData["EventTypeId"] = new SelectList(
+                _context.EventTypes.OrderBy(t => t.Name),
+                "EventTypeId",
+                "Name",
+                eventTypeId);
+            ViewData["VenueId"] = new SelectList(
+                _context.Venues.OrderBy(v => v.Name),
+                "VenueId",
+                "Name",
+                venueId);
 
             var bookings = _context.Bookings
                 .Include(b => b.Event)
+                    .ThenInclude(e => e.EventType)
                 .Include(b => b.Venue)
                 .AsQueryable();
 
-            // Search Functionality
+            if (eventTypeId.HasValue)
+            {
+                bookings = bookings.Where(b => b.Event.EventTypeId == eventTypeId.Value);
+            }
+
+            if (venueId.HasValue)
+            {
+                bookings = bookings.Where(b => b.VenueId == venueId.Value);
+            }
+
+            if (fromDate.HasValue && toDate.HasValue)
+            {
+                var rangeStart = fromDate.Value.Date;
+                var rangeEnd = toDate.Value.Date.AddDays(1);
+                bookings = bookings.Where(b =>
+                    b.StartDateTime < rangeEnd && b.EndDateTime > rangeStart);
+            }
+            else if (fromDate.HasValue)
+            {
+                var rangeStart = fromDate.Value.Date;
+                bookings = bookings.Where(b => b.EndDateTime > rangeStart);
+            }
+            else if (toDate.HasValue)
+            {
+                var rangeEnd = toDate.Value.Date.AddDays(1);
+                bookings = bookings.Where(b => b.StartDateTime < rangeEnd);
+            }
+
             if (!string.IsNullOrEmpty(searchString))
             {
-                // Try parse as int for BookingId search
                 bool isNumeric = int.TryParse(searchString, out int bookingIdSearch);
 
                 bookings = bookings.Where(b =>
                     (isNumeric && b.BookingId == bookingIdSearch) ||
-                    b.Event.Name.Contains(searchString)
-                );
+                    (b.Event != null && b.Event.Name.Contains(searchString)));
             }
 
             return View(await bookings.ToListAsync());
