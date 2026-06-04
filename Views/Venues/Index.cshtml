@@ -14,6 +14,35 @@
     <div class="card-body">
         <form method="get" asp-action="Index" class="row g-3 align-items-end">
             <div class="col-md-3">
+                <label class="form-label" for="searchString">Search</label>
+                <input type="text"
+                       id="searchString"
+                       name="searchString"
+                       value="@ViewData["CurrentFilter"]"
+                       class="form-control"
+                       placeholder="Venue ID, name, location..." />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="minCapacity">Min Capacity</label>
+                <input type="number"
+                       id="minCapacity"
+                       name="minCapacity"
+                       value="@ViewData["MinCapacityFilter"]"
+                       class="form-control"
+                       min="1"
+                       placeholder="e.g. 100" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="maxCapacity">Max Capacity</label>
+                <input type="number"
+                       id="maxCapacity"
+                       name="maxCapacity"
+                       value="@ViewData["MaxCapacityFilter"]"
+                       class="form-control"
+                       min="1"
+                       placeholder="e.g. 5000" />
+            </div>
+            <div class="col-md-2">
                 <label class="form-label" for="fromDate">From Date</label>
                 <input type="date"
                        id="fromDate"
@@ -21,7 +50,7 @@
                        value="@ViewData["FromDateFilter"]"
                        class="form-control" />
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label" for="toDate">To Date</label>
                 <input type="date"
                        id="toDate"
@@ -29,8 +58,8 @@
                        value="@ViewData["ToDateFilter"]"
                        class="form-control" />
             </div>
-            <div class="col-md-3">
-                <div class="form-check mt-4">
+            <div class="col-md-12 col-lg-auto">
+                <div class="form-check">
                     <input type="checkbox"
                            class="form-check-input"
                            id="availableOnly"
@@ -38,17 +67,22 @@
                            value="true"
                            @(ViewData["AvailableOnlyFilter"] is true ? "checked" : null) />
                     <label class="form-check-label" for="availableOnly">
-                        Available venues only
+                        Available venues only (requires from and to dates)
                     </label>
                 </div>
             </div>
-            <div class="col-md-auto d-flex gap-2">
+            <div class="col-md-12 col-lg-auto d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Filter</button>
                 <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
             </div>
         </form>
     </div>
 </div>
+
+@if (ViewData["CapacityFilterError"] != null)
+{
+    <div class="alert alert-warning">@ViewData["CapacityFilterError"]</div>
+}
 
 @if (ViewData["AvailabilityFilterError"] != null)
 {

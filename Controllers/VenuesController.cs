@@ -32,13 +32,50 @@ namespace EventEase.Controllers
         }
 
         // GET: Venues
-        public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, bool availableOnly = false)
+        public async Task<IActionResult> Index(
+            string searchString,
+            int? minCapacity,
+            int? maxCapacity,
+            DateTime? fromDate,
+            DateTime? toDate,
+            bool availableOnly = false)
         {
+            ViewData["CurrentFilter"] = searchString;
+            ViewData["MinCapacityFilter"] = minCapacity;
+            ViewData["MaxCapacityFilter"] = maxCapacity;
             ViewData["FromDateFilter"] = fromDate?.ToString("yyyy-MM-dd");
             ViewData["ToDateFilter"] = toDate?.ToString("yyyy-MM-dd");
             ViewData["AvailableOnlyFilter"] = availableOnly;
 
             var venues = _context.Venues.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                bool isNumeric = int.TryParse(searchString, out int venueIdSearch);
+
+                venues = venues.Where(v =>
+                    (isNumeric && v.VenueId == venueIdSearch) ||
+                    v.Name.Contains(searchString) ||
+                    v.Location.Contains(searchString) ||
+                    (v.Description != null && v.Description.Contains(searchString)));
+            }
+
+            if (minCapacity.HasValue)
+            {
+                venues = venues.Where(v => v.Capacity >= minCapacity.Value);
+            }
+
+            if (maxCapacity.HasValue)
+            {
+                venues = venues.Where(v => v.Capacity <= maxCapacity.Value);
+            }
+
+            if (minCapacity.HasValue && maxCapacity.HasValue && minCapacity.Value > maxCapacity.Value)
+            {
+                ViewData["CapacityFilterError"] =
+                    "Minimum capacity cannot be greater than maximum capacity.";
+                venues = venues.Where(v => false);
+            }
 
             if (availableOnly)
             {
